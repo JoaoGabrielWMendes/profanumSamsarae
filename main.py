@@ -7,7 +7,7 @@ background = pygame.image.load("recursos/universeBackground.png")
 movimentoBackground = -100
 velocidadeeBackground = 0
 orgulho= pygame.image.load("recursos/abstrataOrgulho.png")
-luxuria = pygame.image.load("recursos/abstrataLuxuria (2).png")
+luxuria = pygame.image.load("recursos/abstrataLuxuria.png")
 avareza = pygame.image.load("recursos/abastrataAvareza.png")
 gula = pygame.image.load("recursos/abstrataGula.png")
 ira = pygame.image.load("recursos/abstrataIra.png")
@@ -23,6 +23,7 @@ velocidadePecadoBase = 1
 velocidadePecado = velocidadePecadoBase
 avarezaSubir=False
 luxuriaLateral = False
+velocidadeLuxuria = 0
 velocidadeEspirito = 0
 espiritoX = 500
 movimentoXDemiurge = 300
@@ -76,21 +77,34 @@ while True:
     screen.blit(pecadoAtual, (pecadoX, pecadoY))
     pecadoY += velocidadePecado
     if pecadoAtual == luxuria:
-        if luxuriaLateral:
-            velocidadeLuxuria = velocidadePecadoBase
-            pecadoX += velocidadeLuxuria
-            if pecadoX >= 100 + 200:  # Anda 200px a partir de 100 (ou ajuste como quiser)
-                luxuriaLateral = False
-        else:
-            velocidadeLuxuria = velocidadePecadoBase
-            pecadoX -= velocidadeLuxuria
-            if pecadoX <= -100:
-                # Reset do pecado depois de completar ida e volta
-                if primeiro_pecado:
-                    pecadoAtual = random.choice([p for p in pecados if p != avareza and p != luxuria])
-                    primeiro_pecado = False
-                else:
-                    pecadoAtual = random.choice(pecados)
+        pecadoY = 0  # Fixa a altura da Luxúria
+
+        # Inicialização do movimento lateral (somente na primeira vez)
+        if not luxuriaLateral:
+            lado = random.choice(['esquerda', 'direita'])
+            if lado == 'esquerda':
+                pecadoX = -luxuria.get_width()
+                velocidadeLuxuria = velocidadePecadoBase
+            else:
+                pecadoX = screen.get_width()
+                velocidadeLuxuria = -velocidadePecadoBase
+            luxuriaLateral = True
+            luxuriaVoltar = False  # Define para voltar depois
+
+        pecadoX += velocidadeLuxuria
+
+        # Quando entrar totalmente na tela, inverte direção para sair
+        if not luxuriaVoltar and (0 <= pecadoX <= screen.get_width() - luxuria.get_width()):
+            luxuriaVoltar = True
+            velocidadeLuxuria *= -1  # Inverte direção
+
+        # Quando sair da tela novamente, sorteia novo pecado
+        if luxuriaVoltar and (pecadoX < -luxuria.get_width() or pecadoX > screen.get_width()):
+            pecadoAtual = random.choice(pecados)
+            pecadoX = random.randint(0, 900)
+            pecadoY = -80
+            velocidadePecado = velocidadePecadoBase
+            luxuriaLateral = False
     if pecadoAtual == avareza:
         velocidadeAvareza = velocidadePecadoBase
         if not avarezaSubir and pecadoY <= 0:
@@ -104,12 +118,6 @@ while True:
                 pecadoY = 700
                 velocidadePecado = -velocidadeAvareza
                 avarezaSubir = False
-            elif pecadoAtual == luxuria:
-                velocidadeLuxuria = velocidadePecadoBase
-                pecadoX = -100
-                pecadoY = 275
-                luxuria_ida = True
-                velocidadePecado = velocidadeLuxuria
             else:
                 pecadoY = -80
                 velocidadePecado = velocidadePecadoBase
