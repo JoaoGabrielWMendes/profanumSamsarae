@@ -175,7 +175,7 @@ def jogar():
                     pecadoY += velocidadePecado
                     if len(set(pixelsPecadoX).intersection(set(pixelsEspiritoX)))>dificuldade:
                         if len(set(pixelsPecadoY).intersection(set(pixelsEspiritoY)))>dificuldade:
-                            start()
+                            dead()
                     if pecadoY > 700:
                         karmaPontos+= 1
                         velocidadePecadoBase+=1
@@ -192,7 +192,7 @@ def jogar():
                 if preguicaMovimento:
                     if len(set(pixelsPreguicaX).intersection(set(pixelsEspiritoX)))>dificuldade:
                         if len(set(pixelsPreguicaY).intersection(set(pixelsEspiritoY)))>dificuldade:
-                            start()
+                            dead()
                     if descendoPreguica:
                         pecadoY+= velocidadePecado
                         if pecadoY>=-80:
@@ -215,7 +215,7 @@ def jogar():
                 if luxuriaMovimento:
                     if len(set(pixelsLuxuriaX).intersection(set(pixelsEspiritoX)))>dificuldade:
                         if len(set(pixelsLuxuriaY).intersection(set(pixelsEspiritoY)))>dificuldade:
-                            start()
+                            dead()
                     if indoLuxuria:
                         pecadoX-=velocidadePecado
                         if pecadoX<=500:
@@ -271,6 +271,7 @@ def start():
     larguraBotaoSair = 200
     alturaBotaoSair = 100
     while True:
+        global startButton,sairButton,startTexto,sairTexto
         startButton = pygame.Rect(400, 300, larguraBotaoStart, alturaBotaoStart)
         sairButton = pygame.Rect(400, 450, larguraBotaoSair, alturaBotaoSair)
         startTexto= fontePixeladaStart.render("START", True, branco)
@@ -299,6 +300,36 @@ def start():
         screen.blit(backgroundFrames[backgroundIndex], (0, 0))
         agora = pygame.time.get_ticks()
         screen.blit(tituloStart, (150, 60))
+        screen.blit(startTexto, (410, 350))
+        screen.blit(sairTexto, (425, 450))
+        pygame.display.update()
+def dead():
+    larguraButtonStart = 150
+    alturaButtonStart  = 40
+    larguraButtonQuit = 150
+    alturaButtonQuit  = 40
+    while True:
+        for event in pygame.event.get():
+            if event.type==pygame.QUIT:
+                quit()
+            elif event.type==pygame.MOUSEBUTTONDOWN:
+                if startButton.collidepoint(event.pos):
+                    larguraButtonStart = 150
+                    alturaButtonStart = 40
+                if sairButton.collidepoint(event.pos):
+                    larguraButtonQuit = 150
+                    alturaButtonQuit = 40
+            elif event.type==pygame.MOUSEBUTTONUP:
+                if startButton.collidepoint(event.pos):
+                    larguraButtonStart = 150
+                    alturaButtonStart = 40
+                    jogar()
+                if sairButton.collidepoint(event.pos):
+                    larguraButtonQuit = 150
+                    alturaButtonQuit = 40
+                    quit()
+        screen.blit(backgroundFrames[backgroundIndex], (0, 0))
+        agora = pygame.time.get_ticks()
         screen.blit(startTexto, (410, 350))
         screen.blit(sairTexto, (425, 450))
         pygame.display.update()
