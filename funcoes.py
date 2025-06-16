@@ -1,6 +1,8 @@
 import pygame
 import time
 import pyttsx3
+import sqlite3
+from datetime import datetime
 engine = pyttsx3.init()
 pygame.init()
 def button(screen, x, y, largura, altura, texto , fonte, corTexto=(255,255,255)):

@@ -5,10 +5,13 @@ import pyttsx3
 import time
 import speech_recognition
 import threading
+import sqlite3
+from datetime import datetime 
 from funcoes import button,saida, cliqueMouse, aguarde, resetEngine
 pygame.init()
 engine = pyttsx3.init()
 r = speech_recognition.Recognizer()
+conexao=sqlite3.connect("log.dat")
 screen = pygame.display.set_mode((1000, 700))
 pygame.display.set_caption("Profanum Samsarae")
 backgroundFrames = []
@@ -51,6 +54,19 @@ fonteComicSans=pygame.font.SysFont("comic sans", 14)
 branco = (255, 255, 255)
 preto=(0,0,0)
 vermelho = (255, 0, 0)
+def criarTabela():
+    conexao=sqlite3.connect("log.dat")
+    cursor=conexao.cursor()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS ranking (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            pontuacao INTEGER,
+            data TEXT,
+            hora TEXT
+        )
+    ''')
+    conexao.commit()
+    conexao.close()
 def jogar():
     backgroundIndex = 0
     tempoUltimoFrame = pygame.time.get_ticks()
@@ -291,6 +307,23 @@ def jogar():
             screen.blit(pausa, (380, 300))
         pygame.display.update()
         fps.tick(60)
+def salvarPontuacao(karmaPontos):
+    agorapontos=datetime.now()
+    data= agorapontos.strftime("%Y-%m-%d")
+    hora= agorapontos.strftime("%H:%M:%S")
+    conexao=sqlite3.connect("log.dat")
+    cursor=conexao.cursor()
+    cursor.execute("INSERT INTO ranking(pontuacao, data, hora)VALUES(?,?,?)", (karmaPontos, data, hora))
+    conexao.commit()
+    conexao.close()
+    def mostrarRanking():
+        conexao = sqlite3.connect("log.dat")
+        cursor = conexao.cursor()
+        cursor.execute("SELECT pontuacao, data, hora FROM ranking ORDER BY pontuacao DESC LIMIT 10")
+        resultados = cursor.fetchall()
+        conexao.close()
+        for i (karmaPontos,data, hora) in enumerate(resultados,1):
+            print(f"{i}.{karmaPontos}pontos-{data} ás {hora}")
 def start():
     larguraButtonStart = 200
     alturaButtonStart = 100
