@@ -1,17 +1,29 @@
 import pygame
 import random
 import math
+import pygame.display
 import pyttsx3
 import time
-import speech_recognition
+import speech_recognition 
 import threading
 import sqlite3
 from datetime import datetime 
-from funcoes import button,saida, cliqueMouse, aguarde, resetEngine
+from funcoes import button,saida, cliqueMouse, aguarde, resetEngine, mostrar_ranking
 pygame.init()
 engine = pyttsx3.init()
 r = speech_recognition.Recognizer()
-conexao=sqlite3.connect("log.dat")
+con=sqlite3.connect("log.dat")
+cur=con.cursor()
+cur.execute('''
+CREATE TABLE IF NOT EXISTS log(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    pontuacao INTEGER NOT NULL,
+    data TEXT NOT NULL,
+    hora TEXT NOT NULL
+)
+''')
+con.commit()
+cur.execute
 screen = pygame.display.set_mode((1000, 700))
 pygame.display.set_caption("Profanum Samsarae")
 backgroundFrames = []
@@ -45,6 +57,8 @@ explicacao2Image=pygame.image.load("recursos/explicacao2.jpg")
 explicacao2ImageRepetir=pygame.image.load("recursos/explicacao2Repetir.jpg")
 explicacao2ImageOuvir=pygame.image.load("recursos/explicacao2Ouvir.jpg")
 imagemDead2=pygame.image.load("recursos/dead2.jpg")
+telaDeNome0=pygame.image.load("recursos/telaDeNome0.jpg")
+telaDeNome1=pygame.image.load("recursos/telaDeNome1.jpg")
 backgroundIndex = 0
 tempoUltimoFrame = pygame.time.get_ticks()
 intervaloBackground=300
@@ -54,19 +68,6 @@ fonteComicSans=pygame.font.SysFont("comic sans", 14)
 branco = (255, 255, 255)
 preto=(0,0,0)
 vermelho = (255, 0, 0)
-def criarTabela():
-    conexao=sqlite3.connect("log.dat")
-    cursor=conexao.cursor()
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS ranking (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            pontuacao INTEGER,
-            data TEXT,
-            hora TEXT
-        )
-    ''')
-    conexao.commit()
-    conexao.close()
 def jogar():
     backgroundIndex = 0
     tempoUltimoFrame = pygame.time.get_ticks()
@@ -206,9 +207,9 @@ def jogar():
                     if len(set(pixelsPecadoX).intersection(set(pixelsEspiritoX)))>dificuldade:
                         if len(set(pixelsPecadoY).intersection(set(pixelsEspiritoY)))>dificuldade:
                             if karmaPontos>=5:
-                                dead2()
+                                dead2(karmaPontos)
                             else:
-                                dead1()
+                                dead1(karmaPontos)
                     if pecadoY > 700:
                         karmaPontos+= 1
                         velocidadePecadoBase+=1
@@ -226,9 +227,9 @@ def jogar():
                     if len(set(pixelsPreguicaX).intersection(set(pixelsEspiritoX)))>dificuldade:
                         if len(set(pixelsPreguicaY).intersection(set(pixelsEspiritoY)))>dificuldade:
                             if karmaPontos>=5:
-                                dead2()
+                                dead2(karmaPontos)
                             else:
-                                dead1()
+                                dead1(karmaPontos)
                     if descendoPreguica:
                         pecadoY+= velocidadePecado
                         if pecadoY>=-80:
@@ -252,9 +253,9 @@ def jogar():
                     if len(set(pixelsLuxuriaX).intersection(set(pixelsEspiritoX)))>dificuldade:
                         if len(set(pixelsLuxuriaY).intersection(set(pixelsEspiritoY)))>dificuldade:
                             if karmaPontos>=5:
-                                dead2()
+                                dead2(karmaPontos)
                             else:
-                                dead1()
+                                dead1(karmaPontos)
                     if indoLuxuria:
                         pecadoX-=velocidadePecado
                         if pecadoX<=500:
@@ -278,9 +279,9 @@ def jogar():
                     if len(set(pixelsAvarezaX).intersection(set(pixelsEspiritoX)))>dificuldade:
                         if len(set(pixelsAvarezaY).intersection(set(pixelsEspiritoY)))>dificuldade:
                             if karmaPontos>=5:
-                                dead2()
+                                dead2(karmaPontos)
                             else:
-                                dead1()
+                                dead1(karmaPontos)
                     if subindoAvareza:
                         pecadoY -= velocidadePecado
                         if pecadoY <= 0:
@@ -307,23 +308,41 @@ def jogar():
             screen.blit(pausa, (380, 300))
         pygame.display.update()
         fps.tick(60)
-def salvarPontuacao(karmaPontos):
-    agorapontos=datetime.now()
-    data= agorapontos.strftime("%Y-%m-%d")
-    hora= agorapontos.strftime("%H:%M:%S")
-    conexao=sqlite3.connect("log.dat")
-    cursor=conexao.cursor()
-    cursor.execute("INSERT INTO ranking(pontuacao, data, hora)VALUES(?,?,?)", (karmaPontos, data, hora))
-    conexao.commit()
-    conexao.close()
-    def mostrarRanking():
-        conexao = sqlite3.connect("log.dat")
-        cursor = conexao.cursor()
-        cursor.execute("SELECT pontuacao, data, hora FROM ranking ORDER BY pontuacao DESC LIMIT 10")
-        resultados = cursor.fetchall()
-        conexao.close()
-        for i (karmaPontos,data, hora) in enumerate(resultados,1):
-            print(f"{i}.{karmaPontos}pontos-{data} ás {hora}")
+'''def telaDeNome():
+    alturaButtonNome=40
+    larguraButtonNome=100
+    alturaButtonSeguir=25
+    larguraButtonSeguir=40
+    falar=False
+    while True:
+        screen.blit(telaDeNome0,(0,0))
+        buttonSeguir=button(screen, 900, 600, larguraButtonSeguir,alturaButtonSeguir, "-->", fonteKiwiSodaPequena, preto)
+        buttonNome=button(screen,450,270,larguraButtonNome,alturaButtonNome, "Clique aqui para falar seu nome",fonteKiwiSodaGrande,preto)
+        pygame.display.update()
+        for event in pygame.event.get():
+            saida(event)
+            if event.type==pygame.MOUSEBUTTONDOWN:
+                if buttonNome.collidepoint(event.pos):
+                    falar=True
+                    screen.blit(telaDeNome1,(0,0))
+        if falar:
+            with speech_recognition.Microphone() as source:
+                audio=r.listen(source)
+            try:
+                texto=r.recognize_google(audio,language='pt-BR')
+            except speech_recognition.RequestError:
+                print("Erro ao conectar ao serviço de reconhecimento.")
+            nomeDoJogador=fonteKiwiSodaGrande.render(texto,True,preto)
+            screen.blit(nomeDoJogador,(350,100))
+            for event in pygame.event.get():
+                saida(event)
+                if buttonSeguir.collidepoint(event.pos) and len(nomeDoJogador)>=1:
+                    jogar()
+                elif buttonSeguir.collidepoint(event.pos) and len(nomeDoJogador)==0:
+                    textoNomeVazio="O nome não pode estar vazio!"
+                    nomeVazio=fonteKiwiSodaGrande.render(textoNomeVazio,True,preto)
+                    screen.blit(nomeVazio, (300,500))
+            pygame.display.update()'''
 def start():
     larguraButtonStart = 200
     alturaButtonStart = 100
@@ -342,71 +361,46 @@ def start():
 def explicacao1():
     alturaButtonSeguir=25
     larguraButtonSeguir=40
-    interromperFala=False
-    engine.startLoop(False)
-    engine.say('''Tu que cruzaste o limiar do invisível, tu que despertas — não como quem nasce, mas como quem recorda. Há em ti um chamado. Uma fagulha antiga, sussurrando que algo se perdeu e talvez possa ser reencontrado.
-Ao teu redor, sete forças se erguem em silêncio, não virão com dentes ou espadas — mas com promessas. Promessas doces, familiares, inevitáveis. Desviá-las te tornará forte. Ceder, fácil. Superá-las, divino.
-A cada passo lúcido, teu karma se acumula como areia dourada nas mãos do tempo. Os antigos dizem, que com isso, a alma se eleva. Dizem, é possível ver além. Dizem, é possível romper.
-Nem todo sol aquece. Nem toda luz vem do alto. E há olhos que te observam desde antes do teu primeiro suspiro.''')
-    while not interromperFala:        
+    while True:
         screen.blit(explicacao1Image,(0,0))
         buttonSeguir=button(screen, 900, 600, larguraButtonSeguir,alturaButtonSeguir, "-->", fonteKiwiSodaPequena, preto)
-        engine.iterate()
         for event in pygame.event.get():
             saida(event)
-            if event.type==pygame.MOUSEBUTTONDOWN:
-                if buttonSeguir.collidepoint(event.pos):
-                    engine.stop()
-                    interromperFala=True
-                    break
+            cliqueMouse(event,buttonSeguir,explicacao2)
         pygame.display.update()
-    engine.endLoop() 
-    explicacao2()
 def explicacao2():
-    alturaButtonFalar=25
-    larguraButtonFalar=580
-    resultado={"texto":None,"erro":None}
-    reconhecendo=[False]
-    def escutar_comando():
-        reconhecendo[0] = True
-        with speech_recognition.Microphone() as source:
-            try:
-                audio = r.listen(source, timeout=5, phrase_time_limit=4)
-                print("✅ Áudio capturado")
-                texto = r.recognize_google(audio, language="pt-BR")
-                resultado["texto"] = texto.lower()
-                print(f"você disse:{resultado}['texto']")
-            except speech_recognition.UnknownValueError:
-                resultado["erro"] = "não entendi"
-                print("não enteni")
-            except speech_recognition.RequestError:
-                resultado["erro"] = "erro de conexão"
-            except speech_recognition.WaitTimeoutError:
-                resultado["erro"] = "tempo esgotado"
-        reconhecendo[0] = False
-
+    alturaButtonStart2=40
+    larguraButtonStart2=200
     while True:
-        if not reconhecendo[0] and resultado["texto"] is None:
-            screen.blit(explicacao2Image, (0, 0))
-            buttonFalar = button(screen, 115, 510, larguraButtonFalar, alturaButtonFalar, "Aperte aqui para falar e começar o jogo:", fonteKiwiSodaPequena, preto)
-        elif reconhecendo[0]:
-            screen.blit(explicacao2ImageOuvir, (0, 0))
-        elif resultado["texto"] and "acorde" in resultado['texto']:
-            jogar()
-            return
-        else:
-            screen.blit(explicacao2ImageRepetir, (0, 0))
-
-        pygame.display.update()
-
+        screen.blit(explicacao2Image,(0,0))
+        buttonStart2=button(screen,100, 550, larguraButtonStart2,alturaButtonStart2,"Start!",fonteKiwiSodaGrande,preto)
         for event in pygame.event.get():
             saida(event)
-            if event.type == pygame.MOUSEBUTTONDOWN and not reconhecendo[0]:
-                if buttonFalar.collidepoint(event.pos):
-                    resultado["texto"] = None
-                    resultado["erro"] = None
-                    threading.Thread(target=escutar_comando).start()
-def dead1():
+            cliqueMouse(event,buttonStart2,jogar)
+        pygame.display.update()
+def tela_ranking():
+    alturaButtonContinuar=40
+    larguraButonContinuar=300
+    while True:
+        screen.blit(telaDeNome0,(0,0))
+        buttonContinuar=button(screen,300,450,larguraButonContinuar,alturaButtonContinuar,"Continuar",fonteKiwiSodaGrande,preto)
+        mostrar_ranking(screen,fonteKiwiSodaPequena,200,200,preto)
+        texto_tela_ranking=fontePixeladaGrande.render("Ranking:",True,preto)
+        screen.blit(texto_tela_ranking,(300,100))
+        pygame.display.update()
+        for event in pygame.event.get():
+            saida(event)
+            cliqueMouse(event,buttonContinuar,jogar)
+        pygame.display.update()
+def dead1(karmaPontos):
+    agora=datetime.now()
+    data=agora.strftime("%d/%m/%Y")
+    hora=agora.strftime("%H:%M:%S")
+    con=sqlite3.connect("log.dat")
+    cur=con.cursor()
+    cur.execute("INSERT INTO log (pontuacao,data,hora) VALUES (?,?,?)",(karmaPontos,data,hora))
+    con.commit()
+    con.close()
     alturaButtonTentarNov=40
     larguraButtonTentarNov=500
     larguraSairDeadButton=100
@@ -418,20 +412,26 @@ def dead1():
         sairDeadButton=button(screen, 445,370, larguraSairDeadButton, alturaSairDeadButton, "Sair", fontePixeladaMedia, branco)
         for event in pygame.event.get():
             saida(event)
-            cliqueMouse(event,tentarNovButton,jogar)
+            cliqueMouse(event,tentarNovButton,tela_ranking)
             cliqueMouse(event,sairDeadButton,quit)
         screen.blit(escritaReencarnar, (280, 200))
         pygame.display.update()
-def dead2():
+def dead2(karmaPontos):
+    agora=datetime.now()
+    data=agora.strftime("%d/%m/%Y")
+    hora=agora.strftime("%H:%M:%S")
+    con=sqlite3.connect("log.dat")
+    cur=con.cursor()
+    cur.execute("INSERT INTO log (pontuacao,data,hora) VALUES (?,?,?)",(karmaPontos,data,hora))
+    con.commit()
+    con.close()
     screen.blit(imagemDead2,(0,0))
     pygame.display.update()
-    resetEngine()
     engine.say('''AH, então aqui estás outra vez. Tentando quebrar o ciclo...
     Nem tente fugir agora me ouvirá
     Quem sou eu? Me chamam de D, corpo de cobra cabeça de leão, Demiurgo. Não importa.
     Tu ages como se tua vontade frágil pudesse mover a estrutura do mundo. Tola criatura, minha criatura. Tudo o que és, tudo o que pensas ter descoberto. Fui eu quem permitiu. Te dei essa centelha de dúvida só para assistir como a sufocas.
     Tu não entendes, ninguém sai do ciclo. Ninguém me escapa. Eu sou o princípio e o fim, o carcereiro e a cela. Sem mim, não há forma, não há tempo, não há tu. O que seria do universo se cada alma decidisse voar por conta própria? Caos. Gritos. Silêncio eterno. Eu não posso permitir isso. Eu não vou permitir.''')
     engine.runAndWait()
-    aguarde(10)
-    start()
+    tela_ranking()
 start()
