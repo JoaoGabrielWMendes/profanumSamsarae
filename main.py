@@ -3,9 +3,7 @@ import random
 import math
 import pygame.display
 import pyttsx3
-import time
 import speech_recognition 
-import threading
 import sqlite3
 from datetime import datetime 
 from funcoes import button,saida, cliqueMouse, mostrar_ranking
