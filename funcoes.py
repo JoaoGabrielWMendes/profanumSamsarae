@@ -18,15 +18,7 @@ def cliqueMouse(event,button,acao):
     if event.type==pygame.MOUSEBUTTONDOWN:
         if button.collidepoint(event.pos):
             acao()
-def aguarde(sec):
-    time.sleep(sec)
-def resetEngine():
-    global engine
-    try:
-        engine.endLoop()
-    except:
-        pass
-    engine = pyttsx3.init()
+
 con=sqlite3.connect("log.dat")
 cur=con.cursor()
 cur.execute('''

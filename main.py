@@ -8,7 +8,7 @@ import speech_recognition
 import threading
 import sqlite3
 from datetime import datetime 
-from funcoes import button,saida, cliqueMouse, aguarde, resetEngine, mostrar_ranking
+from funcoes import button,saida, cliqueMouse, mostrar_ranking
 pygame.init()
 engine = pyttsx3.init()
 r = speech_recognition.Recognizer()
@@ -24,6 +24,8 @@ CREATE TABLE IF NOT EXISTS log(
 ''')
 con.commit()
 cur.execute
+icon=pygame.image.load("recursos/icon.bmp")
+pygame.display.set_icon(icon)
 screen = pygame.display.set_mode((1000, 700))
 pygame.display.set_caption("Profanum Samsarae")
 backgroundFrames = []
@@ -45,7 +47,7 @@ inveja= pygame.image.load("recursos/abstrataInveja.png")
 preguica = pygame.image.load("recursos/abstrataPreguica.png")
 espirito = pygame.image.load("recursos/espirito.png")
 demiurge = pygame.image.load("recursos/demiurge.png")
-tituloStart=pygame.image.load("Recursos/profanumSamsaraeInicial.png")
+tituloStart=pygame.image.load("recursos/profanumSamsaraeInicial.png")
 fontePixeladaPequena= pygame.font.Font("recursos/fontePixels.ttf", 20)
 fontePixeladaMedia=pygame.font.Font("recursos/fontePixels.ttf", 35)
 imagemDead=pygame.image.load("recursos/imagemDead1.png")
@@ -68,23 +70,47 @@ fonteComicSans=pygame.font.SysFont("comic sans", 14)
 branco = (255, 255, 255)
 preto=(0,0,0)
 vermelho = (255, 0, 0)
+def main():
+    while True:
+        start()
+        explicacao1()
+        explicacao2()
+        resultado=jogar()
+        while True:
+            if resultado in ("dead1","dead2"):
+                tela_ranking()
+                break
 def jogar():
-    backgroundIndex = 0
-    tempoUltimoFrame = pygame.time.get_ticks()
-    intervaloBackground=300
-    movimentoBackground = -100
-    velocidadeeBackground = 0
-    pecados= [orgulho, luxuria, avareza, gula, ira, inveja, preguica]
+    #Background
+    global movimentoBackground, velocidadeeBackground, backgroundFrames, frame,backgroundFrames, backgroundIndex,tempoUltimoFrame, fps, intervaloBackground
+    #Pecados
+    pecados = [orgulho, luxuria, avareza, gula, ira, inveja, preguica]
+    velocidadePecadoBase = 1
+    velocidadePecado = velocidadePecadoBase
+    larguraEspirito, alturaEspirito = 120, 160
+    larguraAvareza, alturaAvareza = 101, 760
+    larguraLuxuria, alturaLuxuria = 700, 700
+    larguraPreguica, alturaPreguica = 338, 612
+    larguraPecado, alturaPecado = 125, 160
     pecadoAtual = random.choice(pecados)
     pecadoX = random.randint(0, 840)
     pecadoY = -80
-    velocidadePecadoBase = 1
-    velocidadePecado = velocidadePecadoBase
+    #Movimento dos pecados
     avarezaMovimento = False
     luxuriaMovimento = False
     preguicaMovimento = False
+    descendoPreguica = False
+    subindoPreguica = False
+    indoLuxuria = False
+    voltandoLuxuria = False
+    subindoAvareza = False
+    descendoAvareza = False
+    #Outros
+    karmaPontos = 0
+    pausado = False
     espiritoX = 500
     velocidadeEspirito = 0
+    #Demiurge
     velocidadeXdemiurge = 0
     velocidadeYdemiurge = 0
     modoDemiurge = "orbital"
@@ -102,209 +128,195 @@ def jogar():
     velocidadeAngular=0.05
     contadorInversao=0
     tempoInversao=random.randint(180, 600)
-    alturaEspirito=160
-    larguraEspirito=120
-    alturaAvareza=760
-    larguraAvareza=101
-    alturaLuxuria=700
-    larguraLuxuria=700
-    alturaPreguica=612
-    larguraPreguica=338
-    larguraPecado=125
-    alturaPecado=160
-    dificuldade = 30
-    karmaPontos = 0
-    pausado= False
+    def resetar_pecado():
+        nonlocal pecadoAtual, pecadoX, pecadoY
+        nonlocal avarezaMovimento, luxuriaMovimento, preguicaMovimento
+        nonlocal descendoPreguica, subindoPreguica, indoLuxuria, voltandoLuxuria, subindoAvareza, descendoAvareza
+        pecadoAtual = random.choice(pecados)
+        pecadoX = random.randint(0, 840)
+        pecadoY = -80
+        avarezaMovimento = False
+        luxuriaMovimento = False
+        preguicaMovimento = False
+        descendoPreguica = False
+        subindoPreguica = False
+        indoLuxuria = False
+        voltandoLuxuria = False
+        subindoAvareza = False
+        descendoAvareza = False
+
     while True:
-        screen.fill((0, 0, 0))
+        if modoDemiurge == "orbital":
+            angulo+=velocidadeAngular
+            movimentoXDemiurge = centroX + math.cos(angulo)*raioX
+            movimentoYDemiurge = centroY + math.sin(angulo)*raioY
+            contadorInversao += 1
+            if contadorInversao >= tempoInversao:
+                velocidadeAngular*= -1
+                contadorInversao = 0
+                tempoInversao = random.randint(180, 600)
+            if chancePerseguir > random.random():
+                modoDemiurge = "perseguir"
+                tempoPerseguir = 0
+        elif modoDemiurge == "perseguir":
+            dx= espiritoX - movimentoXDemiurge
+            dy= 275 - movimentoYDemiurge
+            distancia = math.hypot(dx, dy)
+            if distancia >distanciaPerseguir:
+                velocidadeXdemiurge = dx / distancia
+                velocidadeYdemiurge = dy / distancia
+            velocidadePerseguir=3
+            movimentoXDemiurge += velocidadeXdemiurge * velocidadePerseguir
+            movimentoYDemiurge += velocidadeYdemiurge * velocidadePerseguir
+            tempoPerseguir += 1
+            if tempoPerseguir >= tempoMaximoPerseguir:
+                alvoOrbitaX = centroX + math.cos(angulo) * raioX
+                alvoOrbitaY = centroY + math.sin(angulo) * raioY
+                modoDemiurge = "retornar"
+                tempoMaximoPerseguir = random.randint(300, 1000)
+        elif modoDemiurge == "retornar":
+            dx = alvoOrbitaX - movimentoXDemiurge
+            dy = alvoOrbitaY - movimentoYDemiurge
+            distancia = math.hypot(dx, dy)
+            if distancia > 1:
+                velocidadeXdemiurge = dx / distancia
+                velocidadeYdemiurge = dy / distancia 
+                velocidadeRetorno = 3
+                movimentoXDemiurge += velocidadeXdemiurge * velocidadeRetorno
+                movimentoYDemiurge += velocidadeYdemiurge * velocidadeRetorno
+            else:
+                modoDemiurge="orbital"
+        agora = pygame.time.get_ticks()
+        if agora - tempoUltimoFrame > intervaloBackground:
+            tempoUltimoFrame = agora
+            backgroundIndex = (backgroundIndex + 1) % len(backgroundFrames)
         for event in pygame.event.get():
             saida(event)
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_LEFT:
                     velocidadeEspirito = -10
-                    velocidadeeBackground=1
+                    velocidadeeBackground=+1
                 if event.key == pygame.K_RIGHT:
                     velocidadeEspirito = 10
-                    velocidadeeBackground = -1
+                    velocidadeeBackground=-1
             if event.type == pygame.KEYUP:
-                if event.key == pygame.K_LEFT:
+                if event.key in [pygame.K_LEFT, pygame.K_RIGHT]:
                     velocidadeEspirito = 0
-                    velocidadeeBackground = 0
-                if event.key == pygame.K_RIGHT:
-                    velocidadeEspirito = 0
-                    velocidadeeBackground = 0
+                    velocidadeeBackground=0
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
                     pausado = not pausado
         if not pausado:
-                agora = pygame.time.get_ticks()
-                if agora - tempoUltimoFrame > intervaloBackground:
-                    tempoUltimoFrame = agora
-                    backgroundIndex = (backgroundIndex + 1) % len(backgroundFrames)
-                if movimentoBackground>0:
-                    movimentoBackground=0
-                elif movimentoBackground<-122:
-                    movimentoBackground=-122
-                if espiritoX < -5:
-                    espiritoX = -5
-                elif espiritoX > 875:
-                    espiritoX = 875
-                movimentoBackground += velocidadeeBackground
-                screen.blit(backgroundFrames[backgroundIndex], (movimentoBackground, 0))
-                espiritoX += velocidadeEspirito
-                if modoDemiurge == "orbital":
-                    angulo+=velocidadeAngular
-                    movimentoXDemiurge = centroX + math.cos(angulo)*raioX
-                    movimentoYDemiurge = centroY + math.sin(angulo)*raioY
-                    contadorInversao += 1
-                    if contadorInversao >= tempoInversao:
-                        velocidadeAngular*= -1
-                        contadorInversao = 0
-                        tempoInversao = random.randint(180, 600)
-                    if chancePerseguir > random.random():
-                        modoDemiurge = "perseguir"
-                        tempoPerseguir = 0
-                elif modoDemiurge == "perseguir":
-                    dx= espiritoX - movimentoXDemiurge
-                    dy= 275 - movimentoYDemiurge
-                    distancia = math.hypot(dx, dy)
-                    if distancia >distanciaPerseguir:
-                        velocidadeXdemiurge = dx / distancia
-                        velocidadeYdemiurge = dy / distancia
-                    velocidadePerseguir=3
-                    movimentoXDemiurge += velocidadeXdemiurge * velocidadePerseguir
-                    movimentoYDemiurge += velocidadeYdemiurge * velocidadePerseguir
-                    tempoPerseguir += 1
-                    if tempoPerseguir >= tempoMaximoPerseguir:
-                        alvoOrbitaX = centroX + math.cos(angulo) * raioX
-                        alvoOrbitaY = centroY + math.sin(angulo) * raioY
-                        modoDemiurge = "retornar"
-                        tempoMaximoPerseguir = random.randint(300, 1000)
-                elif modoDemiurge == "retornar":
-                    dx = alvoOrbitaX - movimentoXDemiurge
-                    dy = alvoOrbitaY - movimentoYDemiurge
-                    distancia = math.hypot(dx, dy)
-                    if distancia > 1:
-                        velocidadeXdemiurge = dx / distancia
-                        velocidadeYdemiurge = dy / distancia 
-                        velocidadeRetorno = 3
-                        movimentoXDemiurge += velocidadeXdemiurge * velocidadeRetorno
-                        movimentoYDemiurge += velocidadeYdemiurge * velocidadeRetorno
+            espiritoX += velocidadeEspirito
+            movimentoBackground+=velocidadeeBackground
+            if movimentoBackground > 0:
+                movimentoBackground = 0
+            elif movimentoBackground < -122:
+                movimentoBackground = -122
+            if espiritoX<0:
+                espiritoX=0
+            if espiritoX>880:
+                espiritoX=880
+            screen.blit(backgroundFrames[backgroundIndex], (movimentoBackground, 0))
+            espirito_rect = pygame.Rect(espiritoX, 275, larguraEspirito, alturaEspirito)
+            if not (luxuriaMovimento or avarezaMovimento or preguicaMovimento):
+                pecado_rect = pygame.Rect(pecadoX, pecadoY, larguraPecado, alturaPecado)
+                pecadoY += velocidadePecado
+                if 0 <= pecadoY <= 700 and espirito_rect.colliderect(pecado_rect):
+                    if karmaPontos >= 5:
+                        return dead2(karmaPontos)
                     else:
-                        modoDemiurge="orbital"
-                pixelsEspiritoX=list(range(espiritoX, espiritoX + larguraEspirito))
-                pixelsEspiritoY=list(range(275, 275 + alturaEspirito))
-                pixelsAvarezaX=list(range(pecadoX, pecadoX + larguraAvareza))
-                pixelsAvarezaY=list(range(pecadoY, pecadoY + alturaAvareza))
-                pixelsLuxuriaX=list(range(pecadoX, pecadoX + larguraLuxuria))
-                pixelsLuxuriaY=list(range(pecadoY, pecadoY + alturaLuxuria))
-                pixelsPreguicaX=list(range(pecadoX, pecadoX + larguraPreguica))
-                pixelsPreguicaY=list(range(pecadoY, pecadoY + alturaPreguica))
-                pixelsPecadoX=list(range(pecadoX, pecadoX + larguraPecado))
-                pixelsPecadoY=list(range(pecadoY, pecadoY + alturaPecado))
-                if not (luxuriaMovimento and pecadoAtual == luxuria or avarezaMovimento and pecadoAtual == avareza or preguicaMovimento and pecadoAtual == preguica):
-                    pecadoY += velocidadePecado
-                    if len(set(pixelsPecadoX).intersection(set(pixelsEspiritoX)))>dificuldade:
-                        if len(set(pixelsPecadoY).intersection(set(pixelsEspiritoY)))>dificuldade:
-                            if karmaPontos>=5:
-                                dead2(karmaPontos)
-                            else:
-                                dead1(karmaPontos)
-                    if pecadoY > 700:
-                        karmaPontos+= 1
-                        velocidadePecadoBase+=1
-                        velocidadePecado = velocidadePecadoBase
-                        pecadoAtual = random.choice(pecados)
-                        pecadoX=random.randint(0, 840)
-                        pecadoY= -80
-                if not preguicaMovimento and pecadoAtual == preguica:
-                    pecadoX=500
-                    pecadoY=-700
+                        return dead1(karmaPontos)
+                if pecadoY > 700:
+                    karmaPontos += 1
+                    velocidadePecadoBase += 1
+                    velocidadePecado = velocidadePecadoBase
+                    resetar_pecado()
+                    continue
+                if pecadoAtual == preguica:
+                    pecadoX = 500
+                    pecadoY = -600
                     descendoPreguica = True
                     subindoPreguica = False
                     preguicaMovimento = True
-                if preguicaMovimento:
-                    if len(set(pixelsPreguicaX).intersection(set(pixelsEspiritoX)))>dificuldade:
-                        if len(set(pixelsPreguicaY).intersection(set(pixelsEspiritoY)))>dificuldade:
-                            if karmaPontos>=5:
-                                dead2(karmaPontos)
-                            else:
-                                dead1(karmaPontos)
-                    if descendoPreguica:
-                        pecadoY+= velocidadePecado
-                        if pecadoY>=-80:
-                            descendoPreguica=False
-                            subindoPreguica=True
-                    elif subindoPreguica:
-                        pecadoY-=velocidadePecado
-                        if pecadoY<=-800:
-                            karmaPontos += 1
-                            preguicaMovimento = False
-                            pecadoAtual = random.choice(pecados)
-                            pecadoX = random.randint(0, 840)
-                            pecadoY = -80
-                if not luxuriaMovimento and pecadoAtual==luxuria:
-                    pecadoX=1100
-                    pecadoY=0
-                    indoLuxuria=True
-                    voltandoLuxuria=False
+                elif pecadoAtual == luxuria:
+                    pecadoX = 1100
+                    pecadoY = 0
+                    indoLuxuria = True
+                    voltandoLuxuria = False
                     luxuriaMovimento = True
-                if luxuriaMovimento:
-                    if len(set(pixelsLuxuriaX).intersection(set(pixelsEspiritoX)))>dificuldade:
-                        if len(set(pixelsLuxuriaY).intersection(set(pixelsEspiritoY)))>dificuldade:
-                            if karmaPontos>=5:
-                                dead2(karmaPontos)
-                            else:
-                                dead1(karmaPontos)
-                    if indoLuxuria:
-                        pecadoX-=velocidadePecado
-                        if pecadoX<=500:
-                            indoLuxuria=False
-                            voltandoLuxuria=True
-                    elif voltandoLuxuria:
-                        pecadoX+=velocidadePecado
-                        if pecadoX>=1200:
-                            karmaPontos+= 1
-                            luxuriaMovimento = False
-                            pecadoAtual = random.choice(pecados)
-                            pecadoX = random.randint(0, 840)
-                            pecadoY = -80
-                if not avarezaMovimento and pecadoAtual == avareza:
-                    pecadoY=800
-                    pecadoX=random.randint(0, 840)
+                elif pecadoAtual == avareza:
+                    pecadoY = 800
+                    pecadoX = random.randint(0, 840)
                     subindoAvareza = True
                     descendoAvareza = False
                     avarezaMovimento = True
-                if avarezaMovimento:
-                    if len(set(pixelsAvarezaX).intersection(set(pixelsEspiritoX)))>dificuldade:
-                        if len(set(pixelsAvarezaY).intersection(set(pixelsEspiritoY)))>dificuldade:
-                            if karmaPontos>=5:
-                                dead2(karmaPontos)
-                            else:
-                                dead1(karmaPontos)
-                    if subindoAvareza:
-                        pecadoY -= velocidadePecado
-                        if pecadoY <= 0:
-                            subindoAvareza = False
-                            descendoAvareza = True
-                    elif descendoAvareza:
-                        pecadoY += velocidadePecado
-                        if pecadoY >= 700:
-                            karmaPontos += 1
-                            avarezaMovimento = False
-                            pecadoAtual = random.choice(pecados)
-                            pecadoX = random.randint(0, 840)
-                            pecadoY = -80
-                karma=fontePixeladaPequena.render("Karma: " + str(karmaPontos), True, branco)
-                textoPause = fonteComicSans.render("Press Space to Pause Game", True, branco)
-                screen.blit(demiurge, (movimentoXDemiurge, movimentoYDemiurge))
-                screen.blit(karma, (5, 5))
-                screen.blit(pecadoAtual, (pecadoX, pecadoY))
-                screen.blit(espirito, (espiritoX, 275))
-                screen.blit(textoPause, (815, 675))
+            if preguicaMovimento:
+                pecado_rect = pygame.Rect(pecadoX, pecadoY, larguraPreguica, alturaPreguica)
+                if descendoPreguica:
+                    pecadoY += velocidadePecado
+                    if pecadoY >= -80:
+                        descendoPreguica = False
+                        subindoPreguica = True
+                elif subindoPreguica:
+                    pecadoY -= velocidadePecado
+                    if pecadoY <= -800:
+                        preguicaMovimento = False
+                        karmaPontos += 1
+                        resetar_pecado()
+                        continue
+                if -800 <= pecadoY <= 700 and espirito_rect.colliderect(pecado_rect):
+                    if karmaPontos >= 5:
+                        return dead2(karmaPontos)
+                    else:
+                        return dead1(karmaPontos)
+            if luxuriaMovimento:
+                pecado_rect = pygame.Rect(pecadoX, pecadoY, larguraLuxuria, alturaLuxuria)
+                if indoLuxuria:
+                    pecadoX -= velocidadePecado
+                    if pecadoX <= 500:
+                        indoLuxuria = False
+                        voltandoLuxuria = True
+                elif voltandoLuxuria:
+                    pecadoX += velocidadePecado
+                    if pecadoX >= 1200:
+                        luxuriaMovimento = False
+                        karmaPontos += 1
+                        resetar_pecado()
+                        continue
+                if 0 <= pecadoX <= 1000 and espirito_rect.colliderect(pecado_rect):
+                    if karmaPontos >= 5:
+                        return dead2(karmaPontos)
+                    else:
+                        return dead1(karmaPontos)
+            if avarezaMovimento:
+                pecado_rect = pygame.Rect(pecadoX, pecadoY, larguraAvareza, alturaAvareza)
+                if subindoAvareza:
+                    pecadoY -= velocidadePecado
+                    if pecadoY <= 0:
+                        subindoAvareza = False
+                        descendoAvareza = True
+                elif descendoAvareza:
+                    pecadoY += velocidadePecado
+                    if pecadoY >= 700:
+                        avarezaMovimento = False
+                        karmaPontos += 1
+                        resetar_pecado()
+                        continue
+                if 0 <= pecadoY <= 700 and espirito_rect.colliderect(pecado_rect):
+                    if karmaPontos >= 5:
+                        return dead2(karmaPontos)
+                    else:
+                        return dead1(karmaPontos)
+            screen.blit(demiurge, (movimentoXDemiurge, movimentoYDemiurge))
+            screen.blit(espirito, (espiritoX, 275))
+            screen.blit(pecadoAtual, (pecadoX, pecadoY))
+            karma = fontePixeladaPequena.render("Karma: " + str(karmaPontos), True, branco)
+            screen.blit(karma, (5, 5))
+            textoPause = fonteComicSans.render("Press Space to Pause Game", True, branco)
+            screen.blit(textoPause, (5, 30))
         if pausado:
             pausa = fontePixeladaGrande.render("PAUSE", True, vermelho)
-            screen.blit(backgroundFrames[backgroundIndex], (movimentoBackground, 0))
             screen.blit(pausa, (380, 300))
         pygame.display.update()
         fps.tick(60)
@@ -355,7 +367,9 @@ def start():
         sairButton=button(screen,400,450,larguraButtonSair,alturaButtonSair, "SAIR", fontePixeladaMedia,branco)
         for event in pygame.event.get():
             saida(event)
-            cliqueMouse(event,startButton,explicacao1)
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if  startButton.collidepoint(event.pos):
+                    return
             cliqueMouse(event,sairButton,quit)
         pygame.display.update()
 def explicacao1():
@@ -366,7 +380,9 @@ def explicacao1():
         buttonSeguir=button(screen, 900, 600, larguraButtonSeguir,alturaButtonSeguir, "-->", fonteKiwiSodaPequena, preto)
         for event in pygame.event.get():
             saida(event)
-            cliqueMouse(event,buttonSeguir,explicacao2)
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if  buttonSeguir.collidepoint(event.pos):
+                    return
         pygame.display.update()
 def explicacao2():
     alturaButtonStart2=40
@@ -376,7 +392,9 @@ def explicacao2():
         buttonStart2=button(screen,100, 550, larguraButtonStart2,alturaButtonStart2,"Start!",fonteKiwiSodaGrande,preto)
         for event in pygame.event.get():
             saida(event)
-            cliqueMouse(event,buttonStart2,jogar)
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if buttonStart2.collidepoint(event.pos):
+                    return 
         pygame.display.update()
 def tela_ranking():
     alturaButtonContinuar=40
@@ -390,7 +408,9 @@ def tela_ranking():
         pygame.display.update()
         for event in pygame.event.get():
             saida(event)
-            cliqueMouse(event,buttonContinuar,jogar)
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if buttonContinuar.collidepoint(event.pos):
+                    return
         pygame.display.update()
 def dead1(karmaPontos):
     agora=datetime.now()
@@ -412,7 +432,9 @@ def dead1(karmaPontos):
         sairDeadButton=button(screen, 445,370, larguraSairDeadButton, alturaSairDeadButton, "Sair", fontePixeladaMedia, branco)
         for event in pygame.event.get():
             saida(event)
-            cliqueMouse(event,tentarNovButton,tela_ranking)
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if tentarNovButton.collidepoint(event.pos):
+                    return "dead1"
             cliqueMouse(event,sairDeadButton,quit)
         screen.blit(escritaReencarnar, (280, 200))
         pygame.display.update()
@@ -433,5 +455,5 @@ def dead2(karmaPontos):
     Tu ages como se tua vontade frágil pudesse mover a estrutura do mundo. Tola criatura, minha criatura. Tudo o que és, tudo o que pensas ter descoberto. Fui eu quem permitiu. Te dei essa centelha de dúvida só para assistir como a sufocas.
     Tu não entendes, ninguém sai do ciclo. Ninguém me escapa. Eu sou o princípio e o fim, o carcereiro e a cela. Sem mim, não há forma, não há tempo, não há tu. O que seria do universo se cada alma decidisse voar por conta própria? Caos. Gritos. Silêncio eterno. Eu não posso permitir isso. Eu não vou permitir.''')
     engine.runAndWait()
-    tela_ranking()
-start()
+    return "dead2"
+main()
