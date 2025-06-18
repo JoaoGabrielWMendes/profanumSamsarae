@@ -27,7 +27,7 @@ pygame.display.set_icon(icon)
 screen = pygame.display.set_mode((1000, 700))
 pygame.display.set_caption("Profanum Samsarae")
 backgroundFrames = []
-for i in range (4):
+for i in range (3):
     frame=pygame.image.load(f"recursos/universeBackground{i}.png")
     backgroundFrames.append(frame)
 backgroundIndex = 0
@@ -71,7 +71,8 @@ vermelho = (255, 0, 0)
 def main():
     while True:
         start()
-        explicacao1()
+        texto=telaDeNome()
+        explicacao1(texto)
         explicacao2()
         resultado=jogar()
         while True:
@@ -176,7 +177,7 @@ def jogar():
             dx = alvoOrbitaX - movimentoXDemiurge
             dy = alvoOrbitaY - movimentoYDemiurge
             distancia = math.hypot(dx, dy)
-            if distancia > 1:
+            if distancia > 5:
                 velocidadeXdemiurge = dx / distancia
                 velocidadeYdemiurge = dy / distancia 
                 velocidadeRetorno = 3
@@ -318,41 +319,6 @@ def jogar():
             screen.blit(pausa, (380, 300))
         pygame.display.update()
         fps.tick(60)
-'''def telaDeNome():
-    alturaButtonNome=40
-    larguraButtonNome=100
-    alturaButtonSeguir=25
-    larguraButtonSeguir=40
-    falar=False
-    while True:
-        screen.blit(telaDeNome0,(0,0))
-        buttonSeguir=button(screen, 900, 600, larguraButtonSeguir,alturaButtonSeguir, "-->", fonteKiwiSodaPequena, preto)
-        buttonNome=button(screen,450,270,larguraButtonNome,alturaButtonNome, "Clique aqui para falar seu nome",fonteKiwiSodaGrande,preto)
-        pygame.display.update()
-        for event in pygame.event.get():
-            saida(event)
-            if event.type==pygame.MOUSEBUTTONDOWN:
-                if buttonNome.collidepoint(event.pos):
-                    falar=True
-                    screen.blit(telaDeNome1,(0,0))
-        if falar:
-            with speech_recognition.Microphone() as source:
-                audio=r.listen(source)
-            try:
-                texto=r.recognize_google(audio,language='pt-BR')
-            except speech_recognition.RequestError:
-                print("Erro ao conectar ao serviço de reconhecimento.")
-            nomeDoJogador=fonteKiwiSodaGrande.render(texto,True,preto)
-            screen.blit(nomeDoJogador,(350,100))
-            for event in pygame.event.get():
-                saida(event)
-                if buttonSeguir.collidepoint(event.pos) and len(nomeDoJogador)>=1:
-                    jogar()
-                elif buttonSeguir.collidepoint(event.pos) and len(nomeDoJogador)==0:
-                    textoNomeVazio="O nome não pode estar vazio!"
-                    nomeVazio=fonteKiwiSodaGrande.render(textoNomeVazio,True,preto)
-                    screen.blit(nomeVazio, (300,500))
-            pygame.display.update()'''
 def start():
     larguraButtonStart = 200
     alturaButtonStart = 100
@@ -370,11 +336,58 @@ def start():
                     return
             cliqueMouse(event,sairButton,quit)
         pygame.display.update()
-def explicacao1():
+def telaDeNome():
+    alturaButtonNome=40
+    larguraButtonNome=900
+    alturaButtonSeguir=25
+    larguraButtonSeguir=40
+    texto=""
+    falar=False
+    nome_reconhecido=False
+    while True:
+        if not nome_reconhecido and not falar:
+            screen.blit(telaDeNome0,(0,0))
+            buttonSeguir=None
+            buttonNome=button(screen,50,270,larguraButtonNome,alturaButtonNome, "Clique aqui para ditar seu nome",fonteKiwiSodaGrande,preto)
+        elif falar:
+            nome_surface=fonteKiwiSodaGrande.render(texto, True, preto)
+            screen.blit(nome_surface, (350, 100))
+            buttonSeguir=button(screen, 900, 600, larguraButtonSeguir,alturaButtonSeguir, "-->", fonteKiwiSodaPequena, preto)
+        pygame.display.update()
+        for event in pygame.event.get():
+            saida(event)
+            if event.type==pygame.MOUSEBUTTONDOWN:
+                if buttonNome.collidepoint(event.pos):
+                    falar=True
+                if nome_reconhecido and buttonSeguir and buttonSeguir.collidepoint(event.pos):
+                    return texto
+        if falar:
+            screen.blit(telaDeNome1,(0,0))
+            pygame.display.update()
+            try:
+                with speech_recognition.Microphone() as source:
+                    audio=r.listen(source)
+                texto=r.recognize_google(audio,language='pt-BR')
+                nome_reconhecido=True
+                screen.blit(telaDeNome1,(0,0))
+                nome_surface = fonteKiwiSodaGrande.render(texto, True, preto)
+                screen.blit(nome_surface, (350, 100))
+                buttonSeguir=button(screen, 900, 600, larguraButtonSeguir, alturaButtonSeguir,"-->", fonteKiwiSodaPequena, preto)
+                pygame.display.update()
+                nome_reconhecido=True
+            except speech_recognition.RequestError:
+                texto="Erro ao conectar ao serviço de reconhecimento."
+            except speech_recognition.UnknownValueError:
+                texto="Repita"
+            falar=False
+            pygame.display.update()
+def explicacao1(texto):
+    nome_surface = fonteKiwiSodaGrande.render(texto, True, preto)
     alturaButtonSeguir=25
     larguraButtonSeguir=40
     while True:
         screen.blit(explicacao1Image,(0,0))
+        screen.blit(nome_surface,(400,75))
         buttonSeguir=button(screen, 900, 600, larguraButtonSeguir,alturaButtonSeguir, "-->", fonteKiwiSodaPequena, preto)
         for event in pygame.event.get():
             saida(event)
