@@ -27,7 +27,7 @@ pygame.display.set_icon(icon)
 screen = pygame.display.set_mode((1000, 700))
 pygame.display.set_caption("Profanum Samsarae")
 backgroundFrames = []
-for i in range (3):
+for i in range (4):
     frame=pygame.image.load(f"recursos/universeBackground{i}.png")
     backgroundFrames.append(frame)
 backgroundIndex = 0
