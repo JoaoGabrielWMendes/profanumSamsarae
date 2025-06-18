@@ -129,7 +129,7 @@ def jogar():
     velocidadeAngular=0.05
     contadorInversao=0
     tempoInversao=random.randint(180, 600)
-    pygame.mixer.music.play(-1)
+    pygame.mixer.Sound.play(somPecados)
     def resetar_pecado():
         nonlocal pecadoAtual, pecadoX, pecadoY
         nonlocal avarezaMovimento, luxuriaMovimento, preguicaMovimento
@@ -349,15 +349,12 @@ def telaDeNome():
     texto=""
     falar=False
     nome_reconhecido=False
-    pygame.mixer.music.play(-1)
     while True:
         if not nome_reconhecido and not falar:
             screen.blit(telaDeNome0,(0,0))
             buttonSeguir=None
             buttonNome=button(screen,50,270,larguraButtonNome,alturaButtonNome, "Clique aqui para ditar seu nome",fonteKiwiSodaGrande,preto)
         elif falar:
-            nome_surface=fonteKiwiSodaGrande.render(texto, True, preto)
-            screen.blit(nome_surface, (350, 100))
             buttonSeguir=button(screen, 900, 600, larguraButtonSeguir,alturaButtonSeguir, "-->", fonteKiwiSodaPequena, preto)
         pygame.display.update()
         for event in pygame.event.get():
@@ -391,7 +388,6 @@ def explicacao1(texto):
     nome_surface = fonteKiwiSodaGrande.render(texto, True, preto)
     alturaButtonSeguir2=25
     larguraButtonSeguir2=40
-    pygame.mixer.music.play(-1)
     while True:
         screen.blit(explicacao1Image,(0,0))
         screen.blit(nome_surface,(400,75))
@@ -405,7 +401,6 @@ def explicacao1(texto):
 def explicacao2():
     alturaButtonStart2=40
     larguraButtonStart2=200
-    pygame.mixer.music.play(-1)
     while True:
         screen.blit(explicacao2Image,(0,0))
         buttonStart2=button(screen,100, 550, larguraButtonStart2,alturaButtonStart2,"Start!",fonteKiwiSodaGrande,preto)
@@ -445,6 +440,7 @@ def dead1(karmaPontos):
     larguraSairDeadButton=100
     alturaSairDeadButton=40
     pygame.mixer.Sound.play(somPecados)
+    pygame.mixer.music.stop()
     while True:
         escritaReencarnar= fontePixeladaGrande.render("REENCARNOU", True, vermelho)
         screen.blit(imagemDead, (0, -300))
@@ -467,6 +463,7 @@ def dead2(karmaPontos):
     cur.execute("INSERT INTO log (pontuacao,data,hora) VALUES (?,?,?)",(karmaPontos,data,hora))
     con.commit()
     con.close()
+    pygame.mixer.music.stop()
     screen.blit(imagemDead2,(0,0))
     pygame.display.update()
     engine.say('''AH, então aqui estás outra vez. Tentando quebrar o ciclo...
