@@ -59,6 +59,8 @@ explicacao2ImageOuvir=pygame.image.load("recursos/explicacao2Ouvir.jpg")
 imagemDead2=pygame.image.load("recursos/dead2.jpg")
 telaDeNome0=pygame.image.load("recursos/telaDeNome0.jpg")
 telaDeNome1=pygame.image.load("recursos/telaDeNome1.jpg")
+soundtrack=pygame.mixer.music.load("recursos/soundtrack.mpeg")
+somPecados=pygame.mixer.Sound("recursos/somPecados.mp3")
 backgroundIndex = 0
 tempoUltimoFrame = pygame.time.get_ticks()
 intervaloBackground=300
@@ -127,6 +129,7 @@ def jogar():
     velocidadeAngular=0.05
     contadorInversao=0
     tempoInversao=random.randint(180, 600)
+    pygame.mixer.music.play(-1)
     def resetar_pecado():
         nonlocal pecadoAtual, pecadoX, pecadoY
         nonlocal avarezaMovimento, luxuriaMovimento, preguicaMovimento
@@ -143,6 +146,7 @@ def jogar():
         voltandoLuxuria = False
         subindoAvareza = False
         descendoAvareza = False
+        pygame.mixer.Sound.play(somPecados)
 
     while True:
         if modoDemiurge == "orbital":
@@ -324,6 +328,7 @@ def start():
     alturaButtonStart = 100
     larguraButtonSair = 200
     alturaButtonSair = 100
+    pygame.mixer.music.play(-1)
     while True:
         screen.blit(backgroundFrames[backgroundIndex], (0, 0))
         screen.blit(tituloStart, (150, 60))
@@ -344,6 +349,7 @@ def telaDeNome():
     texto=""
     falar=False
     nome_reconhecido=False
+    pygame.mixer.music.play(-1)
     while True:
         if not nome_reconhecido and not falar:
             screen.blit(telaDeNome0,(0,0))
@@ -383,21 +389,23 @@ def telaDeNome():
             pygame.display.update()
 def explicacao1(texto):
     nome_surface = fonteKiwiSodaGrande.render(texto, True, preto)
-    alturaButtonSeguir=25
-    larguraButtonSeguir=40
+    alturaButtonSeguir2=25
+    larguraButtonSeguir2=40
+    pygame.mixer.music.play(-1)
     while True:
         screen.blit(explicacao1Image,(0,0))
         screen.blit(nome_surface,(400,75))
-        buttonSeguir=button(screen, 900, 600, larguraButtonSeguir,alturaButtonSeguir, "-->", fonteKiwiSodaPequena, preto)
+        buttonSeguir2=button(screen, 900, 600, larguraButtonSeguir2,alturaButtonSeguir2, "-->", fonteKiwiSodaPequena, preto)
         for event in pygame.event.get():
             saida(event)
             if event.type == pygame.MOUSEBUTTONDOWN:
-                if  buttonSeguir.collidepoint(event.pos):
+                if  buttonSeguir2.collidepoint(event.pos):
                     return
         pygame.display.update()
 def explicacao2():
     alturaButtonStart2=40
     larguraButtonStart2=200
+    pygame.mixer.music.play(-1)
     while True:
         screen.blit(explicacao2Image,(0,0))
         buttonStart2=button(screen,100, 550, larguraButtonStart2,alturaButtonStart2,"Start!",fonteKiwiSodaGrande,preto)
@@ -436,6 +444,7 @@ def dead1(karmaPontos):
     larguraButtonTentarNov=500
     larguraSairDeadButton=100
     alturaSairDeadButton=40
+    pygame.mixer.Sound.play(somPecados)
     while True:
         escritaReencarnar= fontePixeladaGrande.render("REENCARNOU", True, vermelho)
         screen.blit(imagemDead, (0, -300))
