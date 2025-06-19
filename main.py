@@ -6,7 +6,8 @@ import pyttsx3
 import speech_recognition 
 import sqlite3
 from datetime import datetime 
-from funcoes import button,saida, cliqueMouse, mostrar_ranking
+from recursos.funcoes import button, mostrar_ranking
+from recursos.mouse import saida, cliqueMouse
 pygame.init()
 engine = pyttsx3.init()
 r = speech_recognition.Recognizer()
@@ -22,7 +23,8 @@ CREATE TABLE IF NOT EXISTS log(
 ''')
 con.commit()
 cur.execute
-icon=pygame.image.load("recursos/icon.bmp")
+
+icon=pygame.image.load("recursos/icon.ico")
 pygame.display.set_icon(icon)
 screen = pygame.display.set_mode((1000, 700))
 pygame.display.set_caption("Profanum Samsarae")
@@ -46,12 +48,12 @@ preguica = pygame.image.load("recursos/abstrataPreguica.png")
 espirito = pygame.image.load("recursos/espirito.png")
 demiurge = pygame.image.load("recursos/demiurge.png")
 tituloStart=pygame.image.load("recursos/profanumSamsaraeInicial.png")
-fontePixeladaPequena= pygame.font.Font("recursos/fontePixels.ttf", 20)
-fontePixeladaMedia=pygame.font.Font("recursos/fontePixels.ttf", 35)
+fontePixeladaPequena= pygame.font.Font(("recursos/fontePixels.ttf"), 20)
+fontePixeladaMedia=pygame.font.Font(("recursos/fontePixels.ttf"), 35)
 imagemDead=pygame.image.load("recursos/imagemDead1.png")
-fontePixeladaGrande=pygame.font.Font("recursos/fontePixels.ttf", 50)
-fonteKiwiSodaPequena=pygame.font.Font("recursos/KiwiSoda.ttf", 32)
-fonteKiwiSodaGrande=pygame.font.Font("recursos/KiwiSoda.ttf", 70)
+fontePixeladaGrande=pygame.font.Font(("recursos/fontePixels.ttf"), 50)
+fonteKiwiSodaPequena=pygame.font.Font(("recursos/KiwiSoda.ttf"), 32)
+fonteKiwiSodaGrande=pygame.font.Font(("recursos/KiwiSoda.ttf"), 70)
 explicacao1Image=pygame.image.load("recursos/explicacao1.jpg")
 explicacao2Image=pygame.image.load("recursos/explicacao2.jpg")
 explicacao2ImageRepetir=pygame.image.load("recursos/explicacao2Repetir.jpg")
@@ -226,7 +228,7 @@ def jogar():
                 pecado_rect = pygame.Rect(pecadoX, pecadoY, larguraPecado, alturaPecado)
                 pecadoY += velocidadePecado
                 if 0 <= pecadoY <= 700 and espirito_rect.colliderect(pecado_rect):
-                    if karmaPontos >= 5:
+                    if karmaPontos >= 20:
                         return dead2(karmaPontos)
                     else:
                         return dead1(karmaPontos)
@@ -269,7 +271,7 @@ def jogar():
                         resetar_pecado()
                         continue
                 if -800 <= pecadoY <= 700 and espirito_rect.colliderect(pecado_rect):
-                    if karmaPontos >= 5:
+                    if karmaPontos >= 20:
                         return dead2(karmaPontos)
                     else:
                         return dead1(karmaPontos)
@@ -288,7 +290,7 @@ def jogar():
                         resetar_pecado()
                         continue
                 if 0 <= pecadoX <= 1000 and espirito_rect.colliderect(pecado_rect):
-                    if karmaPontos >= 5:
+                    if karmaPontos >= 20:
                         return dead2(karmaPontos)
                     else:
                         return dead1(karmaPontos)
@@ -307,7 +309,7 @@ def jogar():
                         resetar_pecado()
                         continue
                 if 0 <= pecadoY <= 700 and espirito_rect.colliderect(pecado_rect):
-                    if karmaPontos >= 5:
+                    if karmaPontos >= 20:
                         return dead2(karmaPontos)
                     else:
                         return dead1(karmaPontos)

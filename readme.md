@@ -8,6 +8,7 @@
 Em *Profanum Samsarae*, uma alma lançada no ciclo de renascimentos e provações — o samsara. Seu objetivo aparente é acumular karma ao desviar e resistir às tentações representadas pelos sete pecados capitais, cada um com sua simbologia e armadilhas próprias. Através desse processo, a alma busca alcançar a iluminação.
 
 No entanto, há uma camada oculta nessa jornada...
+    <span style="color:red"><strong>__Ele controla tudo__</strong></span>
 
 
 ## Tecnologias Utilizadas
