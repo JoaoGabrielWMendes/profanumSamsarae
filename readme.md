@@ -20,4 +20,4 @@ No entanto, há uma camada oculta nessa jornada...
 - **SQLite3** (armazenamento de ranking e pontuação)
 - **datetime** (controle de datas e horários)
 
----
+---Testado por Leonardo Grimm Maziero - RA 1137914
